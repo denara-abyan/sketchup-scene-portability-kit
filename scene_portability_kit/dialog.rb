@@ -7,7 +7,7 @@ module ScenePortabilityKit
       end
 
       options = {
-        dialog_title: "Scene Portability Kit",
+        dialog_title: "Nadenra Scene Portability Kit",
         preferences_key: "com.antigravity.scene_portability_kit",
         width: 480,
         height: 680,

@@ -39,9 +39,9 @@ module ScenePortabilityKit
   end
 
   unless file_loaded?(__FILE__)
-    toolbar = UI::Toolbar.new("Scene Portability Kit")
+    toolbar = UI::Toolbar.new("Nadenra Scene Portability Kit")
     
-    cmd = UI::Command.new("Scene Portability Kit") { Dialog.show }
+    cmd = UI::Command.new("Nadenra Scene Portability Kit") { Dialog.show }
     
     icon_path = File.join(File.dirname(__FILE__), 'images', 'icon.png')
     cmd.small_icon = icon_path
@@ -50,14 +50,14 @@ module ScenePortabilityKit
     toolbar.add_item(cmd)
     toolbar.restore
     
-    UI.menu("Plugins").add_item("Scene Portability Kit") { Dialog.show }
+    UI.menu("Plugins").add_item("Nadenra Scene Portability Kit") { Dialog.show }
     
     file_loaded(__FILE__)
   end
 end
 
 rescue => e
-  UI.messagebox("Scene Portability Kit failed to load:\n#{e.message}\n\nCheck Ruby Console for details.")
+  UI.messagebox("Nadenra Scene Portability Kit failed to load:\n#{e.message}\n\nCheck Ruby Console for details.")
   puts "ScenePortabilityKit LOAD ERROR: #{e.class}: #{e.message}"
   puts e.backtrace
 end
