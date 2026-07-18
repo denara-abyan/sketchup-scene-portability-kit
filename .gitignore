@@ -8,6 +8,9 @@ package_kit.py
 # Utilities
 powershell.bat
 
+# Scene files
+scene file/
+
 # Python
 __pycache__/
 *.pyc
