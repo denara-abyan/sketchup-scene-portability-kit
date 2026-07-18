@@ -1,4 +1,4 @@
-# Scene Portability Kit
+# Nadenra Scene Portability Kit
 
 A SketchUp extension to export and import scene/page properties via JSON.
 
@@ -17,14 +17,14 @@ Export and import the following scene properties:
 
 ## Installation
 
-1. Download `scene_portability_kit.rbz` from [Releases](https://github.com/denara-abyan/sketchup-scene-portability-kit/releases/download/v1.2.0/scene_portability_kit.rbz)
+1. Download `nadenra_scene_portability_kit.rbz` from [Releases](https://github.com/denara-abyan/sketchup-scene-portability-kit/releases)
 2. In SketchUp: **Window > Extension Manager > Install Extension**
 3. Select the downloaded `.rbz` file
 4. Restart SketchUp
 
 ## Usage
 
-1. Go to **Plugins > Scene Portability Kit** or click the toolbar icon
+1. Go to **Plugins > Nadenra Scene Portability Kit** or click the toolbar icon
 2. Select scenes to **Export** — saves properties to a JSON file
 3. Use **Import** to apply scene properties from a JSON file to current scenes
 
