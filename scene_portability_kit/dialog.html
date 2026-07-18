@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene Portability Kit</title>
+  <style>
+    /* ---- Reset & Base – SketchUp Native UI Style ---- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #f0f0f0;
+      color: #1a1a1a;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ---- Scrollbars ---- */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track  { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb  { background: #c1c1c1; border: 2px solid #f0f0f0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+
+    /* ---- Header / Tab bar ---- */
+    header {
+      background-color: #e8e8e8;
+      border-bottom: 1px solid #c8c8c8;
+      padding: 8px 12px 0 12px;
+      flex-shrink: 0;
+    }
+
+    .app-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .app-title svg { width: 14px; height: 14px; fill: #555; flex-shrink: 0; }
+
+    .tabs { display: flex; gap: 2px; }
+
+    .tab-btn {
+      background: #d4d4d4;
+      border: 1px solid #bebebe;
+      border-bottom: none;
+      color: #444;
+      font-weight: 500;
+      padding: 5px 14px 6px;
+      cursor: pointer;
+      border-top-left-radius: 3px;
+      border-top-right-radius: 3px;
+      outline: none;
+      transition: background 0.12s;
+    }
+    .tab-btn:hover { background: #dedede; color: #111; }
+    .tab-btn.active {
+      background: #f0f0f0;
+      color: #000;
+      font-weight: 700;
+      border-color: #b4b4b4;
+      position: relative;
+      z-index: 2;
+      margin-bottom: -1px;
+      padding-bottom: 7px;
+    }
+
+    /* ---- Content area ---- */
+    .content-container {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background-color: #f0f0f0;
+    }
+
+    .tab-content { display: none; flex-direction: column; }
+    .tab-content.active { display: flex; }
+
+    /* ---- Section headers ---- */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+    }
+
+    /* ---- White inset panels ---- */
+    .panel {
+      background: #fff;
+      border: 1px solid #c8c8c8;
+      border-radius: 2px;
+      padding: 9px 10px;
+      margin-bottom: 12px;
+    }
+
+    /* ---- Scene list box ---- */
+    .scene-list {
+      height: 220px;
+      overflow-y: auto;
+      border: 1px solid #b2b2b2;
+      background: #fff;
+      margin-bottom: 11px;
+    }
+
+    .scene-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e5e5;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .scene-item:last-child { border-bottom: none; }
+    .scene-item:hover   { background-color: #e8f4fd; }
+    .scene-item.selected {
+      background-color: #0078d7;
+      color: #fff;
+    }
+
+    .scene-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .scene-name { font-weight: 600; }
+    .scene-desc { font-size: 11px; color: #666; margin-top: 1px; }
+    
+    .scene-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 10px;
+      color: #777;
+      margin-top: 2px;
+    }
+    
+    .scene-item.selected .scene-desc,
+    .scene-item.selected .scene-meta-row {
+      color: #c8e6ff;
+    }
+
+    .status-badges {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      margin-top: 1px;
+    }
+
+    .status-badge {
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-weight: 600;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .status-badge.active {
+      background-color: #e2f0d9;
+      color: #385723;
+      border-color: #a8d08d;
+    }
+
+    .status-badge.inactive {
+      background-color: #f2f2f2;
+      color: #7f7f7f;
+      border-color: #d9d9d9;
+    }
+
+    .scene-item.selected .status-badge.active {
+      background-color: #a8d08d;
+      color: #1e350f;
+      border-color: #7ba652;
+    }
+
+    .scene-item.selected .status-badge.inactive {
+      background-color: #595959;
+      color: #d9d9d9;
+      border-color: #404040;
+    }
+
+    .empty-state { padding: 28px 10px; text-align: center; color: #888; }
+
+    /* ---- Checkbox list ---- */
+    .checkbox-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      padding: 1px 0;
+      line-height: 1.3;
+    }
+    .checkbox-row.disabled { opacity: 0.45; cursor: not-allowed; }
+    .checkbox-row input[type="checkbox"] { cursor: inherit; accent-color: #0078d7; }
+
+    /* ---- Tooltip icon ---- */
+    .info-tip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #d8d8d8;
+      color: #666;
+      font-size: 8px;
+      font-weight: 700;
+      cursor: help;
+      margin-left: 5px;
+      text-align: center;
+      line-height: 12px;
+      flex-shrink: 0;
+      transition: background-color 0.1s, color 0.1s;
+    }
+    .info-tip:hover {
+      background-color: #0078d7;
+      color: #fff;
+    }
+
+    /* ---- Text field ---- */
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; }
+    .form-label { font-weight: 600; color: #444; }
+    .text-input {
+      background: #fff;
+      border: 1px solid #aaa;
+      border-radius: 2px;
+      padding: 5px 8px;
+      color: #000;
+      outline: none;
+    }
+    .text-input:focus { border-color: #0078d7; outline: 1px solid #0078d7; }
+
+    /* ---- Buttons ---- */
+    .btn {
+      background: linear-gradient(to bottom, #f6f6f6, #ebebeb);
+      border: 1px solid #adadad;
+      border-radius: 3px;
+      padding: 5px 12px;
+      color: #000;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      outline: none;
+      transition: background 0.1s, border-color 0.1s;
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #e5f1fb, #d9ebf9);
+      border-color: #0078d7;
+    }
+    .btn:active:not(:disabled) { background: #cce4f7; border-color: #005a9e; }
+    .btn:disabled { background: #f4f4f4; border-color: #d5d5d5; color: #aaa; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(to bottom, #e3eefc, #d9e8fa);
+      border-color: #0078d7;
+      font-weight: 700;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #cce0f8, #bdd4f4);
+      border-color: #005a9e;
+    }
+
+    /* ---- File loaded banner ---- */
+    .file-banner {
+      background-color: #e6f2dc;
+      border: 1px solid #9dc873;
+      border-radius: 2px;
+      padding: 7px 10px;
+      margin-bottom: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .file-scene-title { font-weight: 700; color: #2d5016; }
+    .file-scene-desc  { font-size: 11px; color: #476b22; }
+
+    /* ---- Toast notification ---- */
+    .toast {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #323232;
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      z-index: 200;
+      opacity: 0;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="app-title">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2
+        12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1
+        c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3
+        c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41
+        c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+    </svg>
+    Scene Portability Kit
+  </div>
+  <div class="tabs">
+    <button id="tab-export" class="tab-btn active" onclick="switchTab('export')">Export Scene</button>
+    <button id="tab-import" class="tab-btn"        onclick="switchTab('import')">Import Scene</button>
+  </div>
+</header>
+
+<div class="content-container">
+
+  <!-- ======= EXPORT PANEL ======= -->
+  <div id="content-export" class="tab-content active">
+
+    <div class="section-label">Scenes in Model</div>
+    <div class="scene-list" id="export-scene-list">
+      <div class="empty-state">Loading scenes…</div>
+    </div>
+
+    <div class="section-label">Properties to Export</div>
+    <div class="panel">
+      <div class="checkbox-list">
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-camera" checked>
+          <span>Camera Location</span>
+          <span class="info-tip" title="Save the camera orientation with the scene">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-style-fog" checked>
+          <span>Style and Fog</span>
+          <span class="info-tip" title="Save the display settings with the scene">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-shadows" checked>
+          <span>Shadow Settings</span>
+          <span class="info-tip" title="Save the shadow information with the scene">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-env" checked>
+          <span>Environment Settings</span>
+          <span class="info-tip" title="Save environmental parameters (sky, ground, geography) with the scene">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-section" checked>
+          <span>Active Section Planes</span>
+          <span class="info-tip" title="Save which section planes are active">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-hidden" checked>
+          <span>Top-Level Hidden Geometry / Objects</span>
+          <span class="info-tip" title="Save the state of hidden geometry not nested within groups/components">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-tags" checked>
+          <span>Visible Tags (Layers)</span>
+          <span class="info-tip" title="Save which tags is hidden">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-axes" checked>
+          <span>Drawing Axes</span>
+          <span class="info-tip" title="Save wether the sketch axe are displayed">?</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="exp-viewport" checked>
+          <span>Viewport Size & Ratio</span>
+          <span class="info-tip" title="Save the viewport dimensions and aspect ratio">?</span>
+        </label>
+      </div>
+    </div>
+
+    <button id="btn-export-action" class="btn btn-primary" style="width:100%"
+            onclick="triggerExport()" disabled>
+      Export Selected Scene…
+    </button>
+  </div>
+
+  <!-- ======= IMPORT PANEL ======= -->
+  <div id="content-import" class="tab-content">
+
+    <!-- Initial state: prompt to pick a file -->
+    <div id="import-init-state">
+      <div class="panel" style="text-align:center; padding:30px 14px;">
+        <div style="font-weight:700; font-size:13px; margin-bottom:6px;">Recreate a Saved Scene</div>
+        <div style="color:#666; margin-bottom:16px; line-height:1.4;">
+          Load a scene properties JSON file and apply selected properties to this model.
+        </div>
+        <button class="btn" onclick="triggerFileSelect()">Select JSON File…</button>
+      </div>
+    </div>
+
+    <!-- Ready state: after file has been parsed -->
+    <div id="import-ready-state" style="display:none;">
+
+      <div class="file-banner">
+        <div class="file-scene-title" id="imp-file-scene-name">—</div>
+        <div class="file-scene-desc"  id="imp-file-scene-desc">—</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="imp-scene-name">Scene Name (to generate)</label>
+        <input type="text" id="imp-scene-name" class="text-input" placeholder="Enter scene name">
+      </div>
+
+      <div class="section-label">Properties to Apply</div>
+      <div class="panel">
+        <div class="checkbox-list">
+          <label class="checkbox-row" id="lbl-imp-camera">
+            <input type="checkbox" id="imp-camera"> <span>Camera Location</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-style-fog">
+            <input type="checkbox" id="imp-style-fog"> <span>Style and Fog</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-shadows">
+            <input type="checkbox" id="imp-shadows"> <span>Shadow Settings</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-env">
+            <input type="checkbox" id="imp-env"> <span>Environment Settings</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-section">
+            <input type="checkbox" id="imp-section"> <span>Active Section Planes</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-hidden">
+            <input type="checkbox" id="imp-hidden"> <span>Top-Level Hidden Geometry / Objects</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-tags">
+            <input type="checkbox" id="imp-tags"> <span>Visible Tags (Layers)</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-axes">
+            <input type="checkbox" id="imp-axes"> <span>Drawing Axes</span>
+          </label>
+          <label class="checkbox-row" id="lbl-imp-viewport">
+            <input type="checkbox" id="imp-viewport"> <span>Viewport Size & Ratio</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn"         style="flex:1;" onclick="resetImportTab()">Cancel</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="triggerApplyImport()">Import Scene</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content-container -->
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+  "use strict";
+
+  let selectedSceneName = null;
+
+  // ---- Init ----
+  window.onload = function () {
+    if (typeof sketchup !== "undefined") sketchup.get_scenes();
+  };
+
+  // ---- Tab switching ----
+  function switchTab(tab) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.getElementById("tab-" + tab).classList.add("active");
+    document.getElementById("content-" + tab).classList.add("active");
+    if (tab === "export" && typeof sketchup !== "undefined") sketchup.get_scenes();
+  }
+
+  // ---- Export tab ----
+
+  // Called by Ruby: populate scene list
+  function updateSceneList(scenes) {
+    const container = document.getElementById("export-scene-list");
+    container.innerHTML = "";
+    selectedSceneName = null;
+    document.getElementById("btn-export-action").disabled = true;
+
+    if (!scenes || scenes.length === 0) {
+      container.innerHTML = '<div class="empty-state">No scenes found in this model</div>';
+      return;
+    }
+
+    scenes.forEach(scene => {
+      const item = document.createElement("div");
+      item.className = "scene-item";
+      item.onclick = () => selectScene(scene.name, item);
+      item.ondblclick = () => activateScene(scene.name);
+      
+      const fogBadgeClass = scene.fog_active ? "active" : "inactive";
+      const envBadgeClass = scene.env_active ? "active" : "inactive";
+      const shadowBadgeClass = scene.shadow_active ? "active" : "inactive";
+
+      item.innerHTML = `
+        <div class="scene-header">
+          <span class="scene-name">${esc(scene.name)}</span>
+        </div>
+        <span class="scene-desc">${esc(scene.description || "No description")}</span>
+        <div class="scene-meta-row">
+          <span><strong>Cam:</strong> ${esc(scene.camera_settings)}</span>
+          <span><strong>Size:</strong> ${esc(scene.viewport_size)}</span>
+        </div>
+        <div class="status-badges">
+          <span class="status-badge ${fogBadgeClass}">Fog</span>
+          <span class="status-badge ${envBadgeClass}">Env</span>
+          <span class="status-badge ${shadowBadgeClass}">Shadow</span>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  function selectScene(name, el) {
+    document.querySelectorAll(".scene-item").forEach(i => i.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedSceneName = name;
+    document.getElementById("btn-export-action").disabled = false;
+  }
+
+  function activateScene(name) {
+    if (typeof sketchup !== "undefined") {
+      sketchup.activate_scene(name);
+    }
+  }
+
+  function triggerExport() {
+    if (!selectedSceneName) return;
+    if (typeof sketchup === "undefined") return;
+
+    const cam = ck("exp-camera");
+    const sty = ck("exp-style-fog");
+    const shd = ck("exp-shadows");
+    const env = ck("exp-env");
+    const sec = ck("exp-section");
+    const hid = ck("exp-hidden");
+    const tag = ck("exp-tags");
+    const axs = ck("exp-axes");
+    const vp  = ck("exp-viewport");
+
+    sketchup.export_scene(selectedSceneName, cam, sty, shd, env, sec, hid, tag, axs, vp);
+  }
+
+  // Called by Ruby on successful export
+  function onExportSuccess(name) {
+    showToast(`Exported "${name}" successfully!`);
+  }
+
+  // ---- Import tab ----
+
+  function triggerFileSelect() {
+    if (typeof sketchup !== "undefined") sketchup.select_import_file();
+  }
+
+  // Called by Ruby after the JSON is parsed
+  function onImportFileLoaded(meta) {
+    document.getElementById("import-init-state").style.display  = "none";
+    document.getElementById("import-ready-state").style.display = "block";
+
+    document.getElementById("imp-file-scene-name").textContent = meta.name;
+    document.getElementById("imp-file-scene-desc").textContent = meta.description || "No description.";
+    document.getElementById("imp-scene-name").value = meta.name;
+
+    // Enable/disable each checkbox depending on what the file contains
+    configCb("camera",    meta.has_camera);
+    configCb("style-fog", meta.has_style_fog);
+    configCb("shadows",   meta.has_shadows);
+    configCb("env",       meta.has_env);
+    configCb("section",   meta.has_section);
+    configCb("hidden",    meta.has_hidden);
+    configCb("tags",      meta.has_tags);
+    configCb("axes",      meta.has_axes);
+    configCb("viewport",  meta.has_viewport);
+  }
+
+  function configCb(id, available) {
+    const input = document.getElementById("imp-" + id);
+    const label = document.getElementById("lbl-imp-" + id);
+    input.checked  = !!available;
+    input.disabled = !available;
+    label.classList.toggle("disabled", !available);
+  }
+
+  function resetImportTab() {
+    document.getElementById("import-ready-state").style.display = "none";
+    document.getElementById("import-init-state").style.display  = "block";
+  }
+
+  function triggerApplyImport() {
+    const name = document.getElementById("imp-scene-name").value.trim();
+    if (!name) { alert("Please enter a scene name."); return; }
+
+    const cam = ck("imp-camera");
+    const sty = ck("imp-style-fog");
+    const shd = ck("imp-shadows");
+    const env = ck("imp-env");
+    const sec = ck("imp-section");
+    const hid = ck("imp-hidden");
+    const tag = ck("imp-tags");
+    const axs = ck("imp-axes");
+    const vp  = ck("imp-viewport");
+
+    if (!cam && !sty && !shd && !env && !sec && !hid && !tag && !axs && !vp) {
+      alert("Please select at least one property to apply.");
+      return;
+    }
+
+    if (typeof sketchup !== "undefined") {
+      sketchup.apply_import(name, cam, sty, shd, env, sec, hid, tag, axs, vp);
+    }
+  }
+
+  // Called by Ruby on successful import
+  function onImportSuccess(name) {
+    showToast(`Imported "${name}" successfully!`);
+    resetImportTab();
+    // Return to export tab so the user can see the new scene
+    setTimeout(() => switchTab("export"), 1200);
+  }
+
+  // ---- Utilities ----
+
+  function ck(id) { return document.getElementById(id).checked; }
+
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove("show"), 3000);
+  }
+
+  function esc(text) {
+    if (!text) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+</body>
+</html>

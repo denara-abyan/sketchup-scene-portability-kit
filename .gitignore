@@ -1,0 +1,18 @@
+# Built plugin package (upload to GitHub Releases instead)
+*.rbz
+
+# Build scripts (not needed by users)
+package.py
+package_kit.py
+
+# Utilities
+powershell.bat
+
+# Python
+__pycache__/
+*.pyc
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
