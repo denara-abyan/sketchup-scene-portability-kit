@@ -17,7 +17,7 @@ Export and import the following scene properties:
 
 ## Installation
 
-1. Download `scene_portability_kit.rbz` from [Releases](https://github.com/denara-abyan/scene-portability-kit/releases)
+1. Download `scene_portability_kit.rbz` from [Releases]([https://github.com/denara-abyan/scene-portability-kit/releases](https://github.com/denara-abyan/sketchup-scene-portability-kit/releases/download/v1.2.0/scene_portability_kit.rbz))
 2. In SketchUp: **Window > Extension Manager > Install Extension**
 3. Select the downloaded `.rbz` file
 4. Restart SketchUp
